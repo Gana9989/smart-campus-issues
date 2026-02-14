@@ -106,7 +106,7 @@
     if (!me.authenticated || me.user.role !== 'admin') { window.location.href = '/login'; return; }
     document.getElementById('userName').textContent = me.user.name;
 
-    const statusColors = { Pending: 'bg-amber-100 text-amber-800', 'In Progress': 'bg-blue-100 text-blue-800', Resolved: 'bg-emerald-100 text-emerald-800' };
+    const statusColors = { Pending: 'bg-orange-100 text-orange-800', 'In Progress': 'bg-blue-100 text-blue-800', Resolved: 'bg-green-100 text-green-800' };
     const categoryColors = { Electricity: 'bg-yellow-100 text-yellow-800', Water: 'bg-cyan-100 text-cyan-800', Cleanliness: 'bg-green-100 text-green-800', Internet: 'bg-violet-100 text-violet-800', Classroom: 'bg-orange-100 text-orange-800', Other: 'bg-slate-100 text-slate-800' };
     function esc(s) { const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
     function attrEsc(s) { return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -162,8 +162,8 @@
                 tr.className = 'hover:bg-slate-50 transition-smooth';
                 tr.innerHTML = `
                     <td class="px-6 py-4 text-slate-800">${esc(issue.title)}</td>
-                    <td class="px-6 py-4"><span class="px-2 py-0.5 rounded text-xs font-medium ${cc}">${esc(issue.category)}</span></td>
-                    <td class="px-6 py-4"><span class="px-2 py-0.5 rounded text-xs font-medium ${sc}">${esc(issue.status)}</span></td>
+                    <td class="px-6 py-4"><span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${cc}">${esc(issue.category)}</span></td>
+                    <td class="px-6 py-4"><span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${sc}">${esc(issue.status)}</span></td>
                     <td class="px-6 py-4 text-slate-600">${esc(issue.user_name || '-')}</td>
                     <td class="px-6 py-4 text-slate-500 text-sm">${dateStr}</td>
                     <td class="px-6 py-4"><button data-id="${issue.id}" data-title="${attrEsc(issue.title)}" data-status="${attrEsc(issue.status)}" class="update-status-btn text-primary-600 hover:text-primary-700 text-sm font-medium">Update</button></td>
@@ -175,11 +175,11 @@
                 card.innerHTML = `
                     <div class="flex justify-between items-start mb-2">
                         <h4 class="font-medium text-slate-800">${esc(issue.title)}</h4>
-                        <span class="px-2 py-0.5 rounded-full text-xs font-medium ${sc}">${esc(issue.status)}</span>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${sc}">${esc(issue.status)}</span>
                     </div>
                     <p class="text-sm text-slate-600 mb-2">${esc(issue.description?.slice(0,80) || '')}${issue.description?.length > 80 ? '...' : ''}</p>
                     <div class="flex justify-between items-center">
-                        <span class="px-2 py-0.5 rounded text-xs font-medium ${cc}">${esc(issue.category)}</span>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${cc}">${esc(issue.category)}</span>
                         <button data-id="${issue.id}" data-title="${attrEsc(issue.title)}" data-status="${attrEsc(issue.status)}" class="update-status-btn text-primary-600 text-sm font-medium">Update</button>
                     </div>
                 `;
