@@ -264,6 +264,7 @@
         });
         const data = await res.json();
         if (data.success) {
+            showToast(data.message || 'Issue status updated successfully!');
             document.getElementById('statusModal').classList.add('hidden');
             document.getElementById('statusModal').classList.remove('flex');
             loadIssues();

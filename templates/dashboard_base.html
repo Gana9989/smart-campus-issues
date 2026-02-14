@@ -15,6 +15,10 @@
         .card:hover { box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.08); }
         .transition-smooth { transition: all 0.2s ease; }
         .sidebar-link.active { background: rgb(59 130 246 / 0.1); color: #2563eb; }
+        #toastContainer { position: fixed; top: 1rem; right: 1rem; z-index: 9999; display: flex; flex-direction: column; gap: 0.5rem; max-width: calc(100vw - 2rem); pointer-events: none; }
+        .toast { padding: 0.875rem 1.25rem; background: #059669; color: white; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); font-weight: 500; font-size: 0.875rem; transform: translateX(120%); opacity: 0; transition: transform 0.3s ease, opacity 0.3s ease; pointer-events: auto; }
+        .toast.show { transform: translateX(0); opacity: 1; }
+        .toast.hide { transform: translateX(120%); opacity: 0; }
     </style>
     {% block head %}{% endblock %}
 </head>
@@ -53,12 +57,35 @@
             </div>
         </main>
     </div>
+    <div id="toastContainer" aria-live="polite" aria-atomic="true"></div>
     <script>
-        document.getElementById('logoutBtn').addEventListener('click', async () => {
-            await fetch('/api/auth/logout', { method: 'POST' });
-            window.location.href = '/login';
-        });
+    function showToast(message) {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.setAttribute('role', 'alert');
+        toast.textContent = message;
+        container.appendChild(toast);
+        requestAnimationFrame(() => toast.classList.add('show'));
+        const timer = setTimeout(() => {
+            toast.classList.remove('show');
+            toast.classList.add('hide');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+        toast.addEventListener('click', () => { clearTimeout(timer); toast.classList.remove('show'); toast.classList.add('hide'); setTimeout(() => toast.remove(), 300); });
+    }
     </script>
+    <script>
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+        await fetch('/api/auth/logout', { method: 'POST' });
+        window.location.href = '/login';
+    });
+    </script>
+    {% for category, message in get_flashed_messages(with_categories=true) %}
+    {% if category == 'success' %}
+    <script>document.addEventListener('DOMContentLoaded', function(){ showToast({{ message | tojson }}); });</script>
+    {% endif %}
+    {% endfor %}
     {% block scripts %}{% endblock %}
 </body>
 </html>

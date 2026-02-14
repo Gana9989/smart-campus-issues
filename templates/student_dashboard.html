@@ -166,6 +166,7 @@
             const res = await fetch('/api/issues', { method: 'POST', body: fd });
             const data = await res.json();
             if (data.success) {
+                showToast(data.message || 'Issue submitted successfully!');
                 document.getElementById('issueForm').reset();
                 document.getElementById('imagePreview').classList.add('hidden');
                 showPage('issues');

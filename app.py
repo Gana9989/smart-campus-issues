@@ -229,7 +229,7 @@ def create_app():
         db.session.add(issue)
         db.session.commit()
 
-        return jsonify({"success": True, "issue": issue.to_dict()})
+        return jsonify({"success": True, "message": "Issue submitted successfully!", "issue": issue.to_dict()})
 
     @app.route("/api/issues/<int:issue_id>/status", methods=["PATCH"])
     @login_required
@@ -251,7 +251,7 @@ def create_app():
         issue.updated_at = datetime.utcnow()
         db.session.commit()
 
-        return jsonify({"success": True, "issue": issue.to_dict()})
+        return jsonify({"success": True, "message": "Issue status updated successfully!", "issue": issue.to_dict()})
 
     @app.route("/api/issues/stats")
     @login_required
