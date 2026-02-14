@@ -1,0 +1,179 @@
+{% extends "dashboard_base.html" %}
+{% block title %}Student Dashboard{% endblock %}
+{% block sidebar_links %}
+<a href="#" data-page="home" class="sidebar-link active flex items-center gap-3 px-4 py-2.5 rounded-lg text-slate-700 hover:bg-slate-50 transition-smooth">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+    Dashboard
+</a>
+<a href="#" data-page="report" class="sidebar-link flex items-center gap-3 px-4 py-2.5 rounded-lg text-slate-700 hover:bg-slate-50 transition-smooth">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+    Report Issue
+</a>
+<a href="#" data-page="issues" class="sidebar-link flex items-center gap-3 px-4 py-2.5 rounded-lg text-slate-700 hover:bg-slate-50 transition-smooth">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+    My Issues
+</a>
+{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block content %}
+<div id="pageHome" class="space-y-6">
+    <div class="card bg-white rounded-2xl p-6 border border-slate-100">
+        <h3 class="text-lg font-semibold text-slate-800 mb-2">Welcome back!</h3>
+        <p class="text-slate-600 mb-6">Report campus issues quickly and track their resolution.</p>
+        <button id="reportIssueBtn" class="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-smooth">
+            Report Issue
+        </button>
+    </div>
+</div>
+
+<div id="pageReport" class="hidden">
+    <div class="card bg-white rounded-2xl p-6 lg:p-8 border border-slate-100 max-w-2xl">
+        <h3 class="text-lg font-semibold text-slate-800 mb-6">Report an Issue</h3>
+        <form id="issueForm" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Title *</label>
+                <input type="text" id="issueTitle" name="title" required minlength="3" maxlength="200" placeholder="Brief title for the issue"
+                    class="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-smooth">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Description *</label>
+                <textarea id="issueDesc" name="description" required minlength="10" rows="4" placeholder="Describe the issue in detail..."
+                    class="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-smooth resize-none"></textarea>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Category *</label>
+                <select id="issueCategory" name="category" required
+                    class="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-smooth">
+                    <option value="">Select category</option>
+                    <option value="Electricity">Electricity</option>
+                    <option value="Water">Water</option>
+                    <option value="Cleanliness">Cleanliness</option>
+                    <option value="Internet">Internet</option>
+                    <option value="Classroom">Classroom</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Image (optional)</label>
+                <input type="file" id="issueImage" name="image" accept="image/*"
+                    class="w-full px-4 py-2.5 rounded-lg border border-slate-200 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-primary-50 file:text-primary-700">
+                <div id="imagePreview" class="mt-2 hidden">
+                    <img id="previewImg" src="" alt="Preview" class="max-h-40 rounded-lg border border-slate-200">
+                </div>
+            </div>
+            <div id="formError" class="text-red-500 text-sm hidden"></div>
+            <button type="submit" id="submitIssueBtn"
+                class="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-smooth">
+                Submit Issue
+            </button>
+        </form>
+    </div>
+</div>
+
+<div id="pageIssues" class="hidden">
+    <div id="issuesList" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <!-- Filled by JS -->
+    </div>
+    <div id="noIssues" class="hidden text-center py-12 text-slate-500">No issues reported yet. <a href="#" class="text-primary-600 hover:underline" data-goto-report>Report an issue</a></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(async () => {
+    const me = await fetch('/api/auth/me').then(r => r.json());
+    if (!me.authenticated) { window.location.href = '/login'; return; }
+    document.getElementById('userName').textContent = me.user.name;
+
+    const statusColors = { Pending: 'bg-amber-100 text-amber-800', 'In Progress': 'bg-blue-100 text-blue-800', Resolved: 'bg-emerald-100 text-emerald-800' };
+    const categoryColors = { Electricity: 'bg-yellow-100 text-yellow-800', Water: 'bg-cyan-100 text-cyan-800', Cleanliness: 'bg-green-100 text-green-800', Internet: 'bg-violet-100 text-violet-800', Classroom: 'bg-orange-100 text-orange-800', Other: 'bg-slate-100 text-slate-800' };
+
+    function renderIssueCard(issue) {
+        const d = new Date(issue.created_at);
+        const dateStr = d.toLocaleDateString();
+        const sc = statusColors[issue.status] || 'bg-slate-100 text-slate-800';
+        const cc = categoryColors[issue.category] || 'bg-slate-100 text-slate-800';
+        return `<div class="card bg-white rounded-xl p-5 border border-slate-100 transition-smooth">
+            <div class="flex items-start justify-between gap-2 mb-2">
+                <h4 class="font-medium text-slate-800">${escapeHtml(issue.title)}</h4>
+                <span class="shrink-0 px-2 py-0.5 rounded-full text-xs font-medium ${sc}">${escapeHtml(issue.status)}</span>
+            </div>
+            <p class="text-sm text-slate-600 mb-3 line-clamp-2">${escapeHtml(issue.description)}</p>
+            <div class="flex items-center justify-between">
+                <span class="px-2 py-0.5 rounded text-xs font-medium ${cc}">${escapeHtml(issue.category)}</span>
+                <span class="text-xs text-slate-400">${dateStr}</span>
+            </div>
+            ${issue.image_path ? `<img src="/uploads/${escapeHtml(issue.image_path)}" alt="" class="mt-3 rounded-lg w-full h-24 object-cover">` : ''}
+        </div>`;
+    }
+    function escapeHtml(s) { const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+    function showPage(page) {
+        ['pageHome','pageReport','pageIssues'].forEach(id => document.getElementById(id).classList.add('hidden'));
+        document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('active'));
+        if (page === 'home') { document.getElementById('pageHome').classList.remove('hidden'); document.querySelector('[data-page="home"]').classList.add('active'); }
+        if (page === 'report') { document.getElementById('pageReport').classList.remove('hidden'); document.querySelector('[data-page="report"]').classList.add('active'); }
+        if (page === 'issues') {
+            document.getElementById('pageIssues').classList.remove('hidden');
+            document.querySelector('[data-page="issues"]').classList.add('active');
+            loadIssues();
+        }
+    }
+
+    async function loadIssues() {
+        const res = await fetch('/api/issues');
+        const data = await res.json();
+        const container = document.getElementById('issuesList');
+        const noIssues = document.getElementById('noIssues');
+        container.innerHTML = '';
+        if (data.issues && data.issues.length) {
+            noIssues.classList.add('hidden');
+            data.issues.forEach(i => container.insertAdjacentHTML('beforeend', renderIssueCard(i)));
+        } else {
+            noIssues.classList.remove('hidden');
+        }
+    }
+
+    document.querySelectorAll('.sidebar-link, [data-goto-report]').forEach(el => {
+        el.addEventListener('click', (e) => { e.preventDefault();
+            if (el.dataset.page) showPage(el.dataset.page);
+            else if (el.dataset.gotoReport) showPage('report');
+        });
+    });
+    document.getElementById('reportIssueBtn').addEventListener('click', () => showPage('report'));
+
+    document.getElementById('issueImage').addEventListener('change', function() {
+        const f = this.files[0];
+        const prev = document.getElementById('imagePreview');
+        const img = document.getElementById('previewImg');
+        if (f) { img.src = URL.createObjectURL(f); prev.classList.remove('hidden'); }
+        else { prev.classList.add('hidden'); }
+    });
+
+    document.getElementById('issueForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('submitIssueBtn');
+        const err = document.getElementById('formError');
+        err.classList.add('hidden');
+        btn.disabled = true;
+        btn.textContent = 'Submitting...';
+        const fd = new FormData();
+        fd.append('title', document.getElementById('issueTitle').value.trim());
+        fd.append('description', document.getElementById('issueDesc').value.trim());
+        fd.append('category', document.getElementById('issueCategory').value);
+        const img = document.getElementById('issueImage').files[0];
+        if (img) fd.append('image', img);
+        try {
+            const res = await fetch('/api/issues', { method: 'POST', body: fd });
+            const data = await res.json();
+            if (data.success) {
+                document.getElementById('issueForm').reset();
+                document.getElementById('imagePreview').classList.add('hidden');
+                showPage('issues');
+            } else { err.textContent = data.message || 'Failed'; err.classList.remove('hidden'); }
+        } catch (_) { err.textContent = 'Network error'; err.classList.remove('hidden'); }
+        btn.disabled = false;
+        btn.textContent = 'Submit Issue';
+    });
+})();
+</script>
+{% endblock %}

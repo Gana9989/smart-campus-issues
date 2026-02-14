@@ -1,0 +1,230 @@
+{% extends "dashboard_base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block sidebar_links %}
+<a href="#" data-page="overview" class="sidebar-link active flex items-center gap-3 px-4 py-2.5 rounded-lg text-slate-700 hover:bg-slate-50 transition-smooth">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+    Overview
+</a>
+<a href="#" data-page="issues" class="sidebar-link flex items-center gap-3 px-4 py-2.5 rounded-lg text-slate-700 hover:bg-slate-50 transition-smooth">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+    All Issues
+</a>
+{% endblock %}
+{% block page_title %}Admin Dashboard{% endblock %}
+{% block content %}
+<div id="pageOverview" class="space-y-6">
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="card bg-white rounded-xl p-5 border border-slate-100">
+            <p class="text-sm text-slate-500">Total Issues</p>
+            <p id="statTotal" class="text-2xl font-bold text-slate-800 mt-1">0</p>
+        </div>
+        <div class="card bg-white rounded-xl p-5 border border-slate-100">
+            <p class="text-sm text-slate-500">Pending</p>
+            <p id="statPending" class="text-2xl font-bold text-amber-600 mt-1">0</p>
+        </div>
+        <div class="card bg-white rounded-xl p-5 border border-slate-100">
+            <p class="text-sm text-slate-500">In Progress</p>
+            <p id="statInProgress" class="text-2xl font-bold text-blue-600 mt-1">0</p>
+        </div>
+        <div class="card bg-white rounded-xl p-5 border border-slate-100">
+            <p class="text-sm text-slate-500">Resolved</p>
+            <p id="statResolved" class="text-2xl font-bold text-emerald-600 mt-1">0</p>
+        </div>
+    </div>
+    <div class="card bg-white rounded-xl p-6 border border-slate-100">
+        <h3 class="text-lg font-semibold text-slate-800 mb-4">Quick Actions</h3>
+        <button onclick="showPage('issues')" class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-smooth">View All Issues</button>
+    </div>
+</div>
+
+<div id="pageIssues" class="hidden space-y-6">
+    <div class="flex flex-col sm:flex-row gap-4">
+        <select id="filterCategory" class="px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-primary-500 outline-none">
+            <option value="">All Categories</option>
+            <option value="Electricity">Electricity</option>
+            <option value="Water">Water</option>
+            <option value="Cleanliness">Cleanliness</option>
+            <option value="Internet">Internet</option>
+            <option value="Classroom">Classroom</option>
+            <option value="Other">Other</option>
+        </select>
+        <select id="filterStatus" class="px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-primary-500 outline-none">
+            <option value="">All Statuses</option>
+            <option value="Pending">Pending</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Resolved">Resolved</option>
+        </select>
+        <button id="applyFilters" class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-smooth">Apply</button>
+    </div>
+
+    <!-- Table view (desktop) -->
+    <div class="card bg-white rounded-xl border border-slate-100 overflow-hidden hidden lg:block">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-slate-50 border-b border-slate-200">
+                    <tr>
+                        <th class="text-left px-6 py-4 text-sm font-medium text-slate-700">Title</th>
+                        <th class="text-left px-6 py-4 text-sm font-medium text-slate-700">Category</th>
+                        <th class="text-left px-6 py-4 text-sm font-medium text-slate-700">Status</th>
+                        <th class="text-left px-6 py-4 text-sm font-medium text-slate-700">Submitted By</th>
+                        <th class="text-left px-6 py-4 text-sm font-medium text-slate-700">Date</th>
+                        <th class="text-left px-6 py-4 text-sm font-medium text-slate-700">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="issuesTableBody" class="divide-y divide-slate-100"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Card view (mobile) -->
+    <div id="issuesCardGrid" class="grid gap-4 sm:grid-cols-2 lg:hidden"></div>
+
+    <div id="noIssues" class="hidden text-center py-12 text-slate-500">No issues found.</div>
+</div>
+
+<!-- Status Modal -->
+<div id="statusModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/40">
+    <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
+        <h3 class="text-lg font-semibold text-slate-800 mb-4">Update Status</h3>
+        <p id="modalIssueTitle" class="text-slate-600 mb-4 truncate"></p>
+        <select id="modalStatusSelect" class="w-full px-4 py-2 rounded-lg border border-slate-200 mb-4">
+            <option value="Pending">Pending</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Resolved">Resolved</option>
+        </select>
+        <div class="flex gap-3">
+            <button id="modalCancel" class="flex-1 py-2 border border-slate-200 rounded-lg hover:bg-slate-50">Cancel</button>
+            <button id="modalSave" class="flex-1 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700">Save</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(async () => {
+    const me = await fetch('/api/auth/me').then(r => r.json());
+    if (!me.authenticated || me.user.role !== 'admin') { window.location.href = '/login'; return; }
+    document.getElementById('userName').textContent = me.user.name;
+
+    const statusColors = { Pending: 'bg-amber-100 text-amber-800', 'In Progress': 'bg-blue-100 text-blue-800', Resolved: 'bg-emerald-100 text-emerald-800' };
+    const categoryColors = { Electricity: 'bg-yellow-100 text-yellow-800', Water: 'bg-cyan-100 text-cyan-800', Cleanliness: 'bg-green-100 text-green-800', Internet: 'bg-violet-100 text-violet-800', Classroom: 'bg-orange-100 text-orange-800', Other: 'bg-slate-100 text-slate-800' };
+    function esc(s) { const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+    function attrEsc(s) { return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    async function loadStats() {
+        const res = await fetch('/api/issues/stats');
+        const data = await res.json();
+        if (data.success) {
+            document.getElementById('statTotal').textContent = data.stats.total;
+            document.getElementById('statPending').textContent = data.stats.pending;
+            document.getElementById('statInProgress').textContent = data.stats.in_progress;
+            document.getElementById('statResolved').textContent = data.stats.resolved;
+        }
+    }
+
+    let currentIssueId = null;
+
+    function showPage(page) {
+        document.getElementById('pageOverview').classList.toggle('hidden', page !== 'overview');
+        document.getElementById('pageIssues').classList.toggle('hidden', page !== 'issues');
+        document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('active'));
+        document.querySelector(`[data-page="${page}"]`).classList.add('active');
+        if (page === 'overview') loadStats();
+        if (page === 'issues') loadIssues();
+    }
+
+    async function loadIssues() {
+        const cat = document.getElementById('filterCategory').value;
+        const st = document.getElementById('filterStatus').value;
+        let url = '/api/issues?';
+        if (cat) url += 'category=' + encodeURIComponent(cat) + '&';
+        if (st) url += 'status=' + encodeURIComponent(st);
+        const res = await fetch(url);
+        const data = await res.json();
+        const issues = data.issues || [];
+        const tbody = document.getElementById('issuesTableBody');
+        const grid = document.getElementById('issuesCardGrid');
+        const noIssues = document.getElementById('noIssues');
+        tbody.innerHTML = '';
+        grid.innerHTML = '';
+
+        if (issues.length === 0) {
+            noIssues.classList.remove('hidden');
+        } else {
+            noIssues.classList.add('hidden');
+            issues.forEach(issue => {
+                const d = new Date(issue.created_at);
+                const dateStr = d.toLocaleDateString();
+                const sc = statusColors[issue.status] || 'bg-slate-100 text-slate-800';
+                const cc = categoryColors[issue.category] || 'bg-slate-100 text-slate-800';
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition-smooth';
+                tr.innerHTML = `
+                    <td class="px-6 py-4 text-slate-800">${esc(issue.title)}</td>
+                    <td class="px-6 py-4"><span class="px-2 py-0.5 rounded text-xs font-medium ${cc}">${esc(issue.category)}</span></td>
+                    <td class="px-6 py-4"><span class="px-2 py-0.5 rounded text-xs font-medium ${sc}">${esc(issue.status)}</span></td>
+                    <td class="px-6 py-4 text-slate-600">${esc(issue.user_name || '-')}</td>
+                    <td class="px-6 py-4 text-slate-500 text-sm">${dateStr}</td>
+                    <td class="px-6 py-4"><button data-id="${issue.id}" data-title="${attrEsc(issue.title)}" data-status="${attrEsc(issue.status)}" class="update-status-btn text-primary-600 hover:text-primary-700 text-sm font-medium">Update</button></td>
+                `;
+                tbody.appendChild(tr);
+
+                const card = document.createElement('div');
+                card.className = 'card bg-white rounded-xl p-5 border border-slate-100';
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <h4 class="font-medium text-slate-800">${esc(issue.title)}</h4>
+                        <span class="px-2 py-0.5 rounded-full text-xs font-medium ${sc}">${esc(issue.status)}</span>
+                    </div>
+                    <p class="text-sm text-slate-600 mb-2">${esc(issue.description?.slice(0,80) || '')}${issue.description?.length > 80 ? '...' : ''}</p>
+                    <div class="flex justify-between items-center">
+                        <span class="px-2 py-0.5 rounded text-xs font-medium ${cc}">${esc(issue.category)}</span>
+                        <button data-id="${issue.id}" data-title="${attrEsc(issue.title)}" data-status="${attrEsc(issue.status)}" class="update-status-btn text-primary-600 text-sm font-medium">Update</button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+
+            document.querySelectorAll('.update-status-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    currentIssueId = parseInt(btn.dataset.id);
+                    document.getElementById('modalIssueTitle').textContent = btn.dataset.title;
+                    document.getElementById('modalStatusSelect').value = btn.dataset.status;
+                    document.getElementById('statusModal').classList.remove('hidden');
+                    document.getElementById('statusModal').classList.add('flex');
+                });
+            });
+        }
+    }
+
+    document.querySelectorAll('.sidebar-link').forEach(el => {
+        el.addEventListener('click', (e) => { e.preventDefault(); showPage(el.dataset.page); });
+    });
+
+    document.getElementById('applyFilters').addEventListener('click', loadIssues);
+    document.getElementById('modalCancel').addEventListener('click', () => {
+        document.getElementById('statusModal').classList.add('hidden');
+        document.getElementById('statusModal').classList.remove('flex');
+    });
+    document.getElementById('modalSave').addEventListener('click', async () => {
+        if (!currentIssueId) return;
+        const status = document.getElementById('modalStatusSelect').value;
+        const res = await fetch(`/api/issues/${currentIssueId}/status`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status })
+        });
+        const data = await res.json();
+        if (data.success) {
+            document.getElementById('statusModal').classList.add('hidden');
+            document.getElementById('statusModal').classList.remove('flex');
+            loadIssues();
+            loadStats();
+        }
+    });
+
+    loadStats();
+})();
+</script>
+{% endblock %}
