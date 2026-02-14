@@ -11,14 +11,59 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
-        .card { box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.07); }
-        .card:hover { box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.08); }
+        .card {
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.07);
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+            transform-origin: center;
+        }
+        .card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 12px 24px -4px rgb(0 0 0 / 0.1), 0 6px 12px -6px rgb(0 0 0 / 0.08);
+        }
         .transition-smooth { transition: all 0.2s ease; }
+        .sidebar-link {
+            position: relative;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+        .sidebar-link::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0;
+            height: 60%;
+            background: #2563eb;
+            border-radius: 0 4px 4px 0;
+            transition: width 0.2s ease;
+        }
+        .sidebar-link:hover::before { width: 3px; }
+        .sidebar-link:hover { background: rgb(59 130 246 / 0.08); }
         .sidebar-link.active { background: rgb(59 130 246 / 0.1); color: #2563eb; }
+        .sidebar-link.active::before { width: 3px; }
+        .hover-lift {
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+        }
+        .hover-lift:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in { animation: fadeInUp 0.4s ease-out forwards; }
         #toastContainer { position: fixed; top: 1rem; right: 1rem; z-index: 9999; display: flex; flex-direction: column; gap: 0.5rem; max-width: calc(100vw - 2rem); pointer-events: none; }
-        .toast { padding: 0.875rem 1.25rem; background: #059669; color: white; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); font-weight: 500; font-size: 0.875rem; transform: translateX(120%); opacity: 0; transition: transform 0.3s ease, opacity 0.3s ease; pointer-events: auto; }
+        .toast {
+            padding: 0.875rem 1.25rem; background: #059669; color: white; border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            font-weight: 500; font-size: 0.875rem;
+            transform: translateX(120%); opacity: 0;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+            pointer-events: auto;
+        }
         .toast.show { transform: translateX(0); opacity: 1; }
-        .toast.hide { transform: translateX(120%); opacity: 0; }
+        .toast.hide { transform: translateX(120%); opacity: 0; transition: transform 0.25s ease-out, opacity 0.25s ease-out; }
     </style>
     {% block head %}{% endblock %}
 </head>
@@ -52,7 +97,7 @@
                     <h2 class="text-lg font-semibold text-slate-800">{% block page_title %}Dashboard{% endblock %}</h2>
                 </div>
             </header>
-            <div class="flex-1 p-4 lg:p-8">
+            <div class="flex-1 p-4 lg:p-8 fade-in">
                 {% block content %}{% endblock %}
             </div>
         </main>
