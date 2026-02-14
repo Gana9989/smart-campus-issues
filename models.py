@@ -44,6 +44,7 @@ class Issue(db.Model):
     image_path = db.Column(db.String(500), nullable=True)
     status = db.Column(db.String(30), default="Pending")  # Pending | In Progress | Resolved
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
 
     def to_dict(self):

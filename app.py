@@ -1,6 +1,7 @@
 """Smart Campus Issue Reporting System - Flask Application."""
 import os
-from datetime import datetime
+from datetime import datetime, date
+from sqlalchemy import func
 from flask import Flask, render_template, request, jsonify, redirect, url_for, send_from_directory
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
@@ -65,7 +66,31 @@ def create_app():
     def admin_dashboard():
         if current_user.role != "admin":
             return redirect(url_for("student_dashboard"))
-        return render_template("admin_dashboard.html")
+
+        total_issues = Issue.query.count()
+        today = date.today()
+        resolved_today = Issue.query.filter(
+            Issue.status == "Resolved",
+            func.date(Issue.updated_at) == today,
+        ).count()
+        pending_count = Issue.query.filter_by(status="Pending").count()
+        category_results = (
+            db.session.query(Issue.category, func.count(Issue.id))
+            .group_by(Issue.category)
+            .order_by(func.count(Issue.id).desc())
+            .all()
+        )
+        category_labels = [r[0] for r in category_results]
+        category_counts = [r[1] for r in category_results]
+
+        return render_template(
+            "admin_dashboard.html",
+            total_issues=total_issues,
+            resolved_today=resolved_today,
+            pending_count=pending_count,
+            category_labels=category_labels,
+            category_counts=category_counts,
+        )
 
     @app.route("/uploads/<path:filename>")
     def uploaded_file(filename):
@@ -223,6 +248,7 @@ def create_app():
 
         issue = Issue.query.get_or_404(issue_id)
         issue.status = status
+        issue.updated_at = datetime.utcnow()
         db.session.commit()
 
         return jsonify({"success": True, "issue": issue.to_dict()})
@@ -237,10 +263,21 @@ def create_app():
         pending = Issue.query.filter_by(status="Pending").count()
         in_progress = Issue.query.filter_by(status="In Progress").count()
         resolved = Issue.query.filter_by(status="Resolved").count()
+        today = date.today()
+        resolved_today = Issue.query.filter(
+            Issue.status == "Resolved",
+            func.date(Issue.updated_at) == today,
+        ).count()
 
         return jsonify({
             "success": True,
-            "stats": {"total": total, "pending": pending, "in_progress": in_progress, "resolved": resolved},
+            "stats": {
+                "total": total,
+                "pending": pending,
+                "in_progress": in_progress,
+                "resolved": resolved,
+                "resolved_today": resolved_today,
+            },
         })
 
     return app
@@ -250,6 +287,18 @@ app = create_app()
 
 with app.app_context():
     db.create_all()
+    # Migration: add updated_at to issues table if missing (existing DBs)
+    try:
+        from sqlalchemy import inspect, text
+        insp = inspect(db.engine)
+        if "issues" in insp.get_table_names():
+            cols = [c["name"] for c in insp.get_columns("issues")]
+            if "updated_at" not in cols:
+                with db.engine.connect() as conn:
+                    conn.execute(text("ALTER TABLE issues ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP"))
+                    conn.commit()
+    except Exception:
+        pass
     # Create default admin if none exists
     if not User.query.filter_by(role="admin").first():
         admin = User(name="Admin", email="admin@campus.edu", role="admin")
