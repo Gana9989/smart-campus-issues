@@ -15,6 +15,11 @@ class User(UserMixin, db.Model):
     password = db.Column(db.String(256), nullable=False)
     role = db.Column(db.String(20), default="student")  # student | admin
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    # Student profile fields (optional)
+    phone = db.Column(db.String(20), nullable=True)
+    department = db.Column(db.String(80), nullable=True)
+    year = db.Column(db.String(20), nullable=True)
+    hostel_or_block = db.Column(db.String(80), nullable=True)
 
     issues = db.relationship("Issue", backref="user", lazy="dynamic")
 
@@ -30,6 +35,10 @@ class User(UserMixin, db.Model):
             "name": self.name,
             "email": self.email,
             "role": self.role,
+            "phone": self.phone or "",
+            "department": self.department or "",
+            "year": self.year or "",
+            "hostel_or_block": self.hostel_or_block or "",
         }
 
 

@@ -41,6 +41,7 @@
         body.dark .border-slate-200, body.dark .border-slate-100 { border-color: var(--border-color) !important; }
         body.dark .bg-slate-50 { background-color: var(--card-bg) !important; }
         body.dark input, body.dark textarea, body.dark select { background-color: var(--card-bg) !important; color: var(--text-color) !important; border-color: var(--border-color) !important; }
+        body.dark input:disabled, body.dark input[readonly] { opacity: 0.85; }
         body.dark .text-primary-600, body.dark .text-primary-700, body.dark a.text-primary-600, body.dark a.text-primary-700 { color: var(--primary-color) !important; }
         body.dark .hover\:text-primary-700:hover, body.dark .hover\:text-primary-600:hover { color: #93c5fd !important; }
         body.dark .sidebar-link:hover { background: rgba(96, 165, 250, 0.12) !important; }
@@ -129,7 +130,11 @@
                     {% block sidebar_links %}{% endblock %}
                 </nav>
                 <div class="p-4 border-t border-slate-100">
+                    {% if profile_link|default(false) %}
+                    <a href="/student/profile" class="block text-sm text-slate-600 truncate hover:text-primary-600 transition-colors" id="userName">Loading...</a>
+                    {% else %}
                     <p class="text-sm text-slate-600 truncate" id="userName">Loading...</p>
+                    {% endif %}
                     <button id="logoutBtn" class="text-sm text-primary-600 hover:text-primary-700 font-medium mt-1">Logout</button>
                 </div>
             </div>

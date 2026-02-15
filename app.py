@@ -59,7 +59,14 @@ def create_app():
     def student_dashboard():
         if current_user.role != "student":
             return redirect(url_for("admin_dashboard"))
-        return render_template("student_dashboard.html")
+        return render_template("student_dashboard.html", profile_link=True)
+
+    @app.route("/student/profile")
+    @login_required
+    def student_profile():
+        if current_user.role != "student":
+            return redirect(url_for("admin_dashboard"))
+        return render_template("student_profile.html", profile_link=True, user=current_user)
 
     @app.route("/admin/dashboard")
     @login_required
@@ -169,6 +176,35 @@ def create_app():
         if not current_user.is_authenticated:
             return jsonify({"authenticated": False}), 401
         return jsonify({"authenticated": True, "user": current_user.to_dict()})
+
+    @app.route("/api/student/profile")
+    @login_required
+    def api_student_profile():
+        if current_user.role != "student":
+            return jsonify({"success": False, "message": "Access denied"}), 403
+        return jsonify({"success": True, "user": current_user.to_dict()})
+
+    @app.route("/api/student/profile/update", methods=["POST"])
+    @login_required
+    def api_student_profile_update():
+        if current_user.role != "student":
+            return jsonify({"success": False, "message": "Only students can update profile"}), 403
+        data = request.get_json()
+        if not data:
+            return jsonify({"success": False, "message": "Invalid JSON"}), 400
+
+        name = (data.get("full_name") or data.get("name") or "").strip()
+        if not name or len(name) < 2:
+            return jsonify({"success": False, "message": "Full name must be at least 2 characters"}), 400
+
+        current_user.name = name
+        current_user.phone = (data.get("phone") or "").strip() or None
+        current_user.department = (data.get("department") or "").strip() or None
+        current_user.year = (data.get("year") or "").strip() or None
+        current_user.hostel_or_block = (data.get("hostel_or_block") or "").strip() or None
+        db.session.commit()
+
+        return jsonify({"success": True, "message": "Profile updated successfully!", "user": current_user.to_dict()})
 
     # --- Issues API ---
 
@@ -297,6 +333,14 @@ with app.app_context():
                 with db.engine.connect() as conn:
                     conn.execute(text("ALTER TABLE issues ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP"))
                     conn.commit()
+        # Migration: add student profile columns to users table if missing
+        if "users" in insp.get_table_names():
+            user_cols = [c["name"] for c in insp.get_columns("users")]
+            for col in ("phone", "department", "year", "hostel_or_block"):
+                if col not in user_cols:
+                    with db.engine.connect() as conn:
+                        conn.execute(text(f"ALTER TABLE users ADD COLUMN {col} TEXT"))
+                        conn.commit()
     except Exception:
         pass
     # Create default admin if none exists
