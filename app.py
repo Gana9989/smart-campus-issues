@@ -17,6 +17,7 @@ def create_app():
     app.config.from_object(Config)
 
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+    os.makedirs(app.config["PROFILE_IMAGES_FOLDER"], exist_ok=True)
 
     db.init_app(app)
     login_manager = LoginManager()
@@ -28,9 +29,13 @@ def create_app():
         return User.query.get(int(user_id))
 
     ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
+    PROFILE_IMAGE_EXTENSIONS = {"jpg", "jpeg", "png", "webp"}
 
     def allowed_file(filename):
         return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+    def allowed_profile_image(filename):
+        return "." in filename and filename.rsplit(".", 1)[1].lower() in PROFILE_IMAGE_EXTENSIONS
 
     # --- Page Routes ---
 
@@ -206,6 +211,40 @@ def create_app():
 
         return jsonify({"success": True, "message": "Profile updated successfully!", "user": current_user.to_dict()})
 
+    @app.route("/api/student/profile/upload-photo", methods=["POST"])
+    @login_required
+    def api_student_profile_upload_photo():
+        if current_user.role != "student":
+            return jsonify({"success": False, "message": "Only students can upload profile photos"}), 403
+        if "photo" not in request.files and "image" not in request.files:
+            return jsonify({"success": False, "message": "No file provided"}), 400
+        file = request.files.get("photo") or request.files.get("image")
+        if not file or not file.filename:
+            return jsonify({"success": False, "message": "No file selected"}), 400
+        if not allowed_profile_image(file.filename):
+            return jsonify({"success": False, "message": "Allowed formats: JPG, PNG, JPEG, WEBP"}), 400
+        file.seek(0, 2)
+        size = file.tell()
+        file.seek(0)
+        if size > app.config["PROFILE_IMAGE_MAX_SIZE"]:
+            return jsonify({"success": False, "message": "File too large. Max 2MB."}), 400
+        ext = file.filename.rsplit(".", 1)[1].lower()
+        unique_name = secure_filename(f"user_{current_user.id}_{datetime.utcnow().timestamp()}.{ext}")
+        profile_dir = app.config["PROFILE_IMAGES_FOLDER"]
+        if current_user.profile_image:
+            old_path = os.path.join(app.config["UPLOAD_FOLDER"], current_user.profile_image)
+            if os.path.isfile(old_path):
+                try:
+                    os.remove(old_path)
+                except OSError:
+                    pass
+        rel_path = os.path.join("profile_images", unique_name)
+        full_path = os.path.join(app.config["UPLOAD_FOLDER"], rel_path)
+        file.save(full_path)
+        current_user.profile_image = rel_path.replace("\\", "/")
+        db.session.commit()
+        return jsonify({"success": True, "message": "Photo updated successfully!", "user": current_user.to_dict()})
+
     # --- Issues API ---
 
     @app.route("/api/issues", methods=["GET"])
@@ -336,7 +375,7 @@ with app.app_context():
         # Migration: add student profile columns to users table if missing
         if "users" in insp.get_table_names():
             user_cols = [c["name"] for c in insp.get_columns("users")]
-            for col in ("phone", "department", "year", "hostel_or_block"):
+            for col in ("phone", "department", "year", "hostel_or_block", "profile_image"):
                 if col not in user_cols:
                     with db.engine.connect() as conn:
                         conn.execute(text(f"ALTER TABLE users ADD COLUMN {col} TEXT"))

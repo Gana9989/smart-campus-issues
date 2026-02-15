@@ -20,6 +20,7 @@ class User(UserMixin, db.Model):
     department = db.Column(db.String(80), nullable=True)
     year = db.Column(db.String(20), nullable=True)
     hostel_or_block = db.Column(db.String(80), nullable=True)
+    profile_image = db.Column(db.String(500), nullable=True)
 
     issues = db.relationship("Issue", backref="user", lazy="dynamic")
 
@@ -39,6 +40,7 @@ class User(UserMixin, db.Model):
             "department": self.department or "",
             "year": self.year or "",
             "hostel_or_block": self.hostel_or_block or "",
+            "profile_image": self.profile_image or "",
         }
 
 

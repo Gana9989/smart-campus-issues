@@ -22,6 +22,24 @@
 {% block content %}
 <div class="max-w-2xl">
     <div class="card bg-white rounded-2xl p-6 lg:p-8 border border-slate-100 shadow-sm">
+        <div class="flex flex-col sm:flex-row items-center gap-6 mb-8">
+            <div class="avatar-wrapper relative group shrink-0">
+                <div class="w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden bg-slate-200 border-2 border-slate-200 flex items-center justify-center ring-2 ring-transparent group-hover:ring-primary-300 transition-all">
+                    <img id="profileAvatar" {% if user.profile_image %}src="/uploads/{{ user.profile_image }}"{% endif %} alt="Profile" class="w-full h-full object-cover {% if not user.profile_image %}hidden{% endif %}">
+                    <div id="avatarPlaceholder" class="w-full h-full flex items-center justify-center {% if user.profile_image %}hidden{% endif %}">
+                        <svg class="w-12 h-12 sm:w-14 sm:h-14 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                    </div>
+                </div>
+                <div class="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+                    <span class="text-white text-sm font-medium">Change photo</span>
+                </div>
+                <input type="file" id="photoInput" accept="image/jpeg,image/png,image/webp,image/jpg" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+            </div>
+            <div class="flex-1 w-full sm:w-auto">
+                <p class="text-sm text-slate-600 mb-2">Profile photo (JPG, PNG, WEBP, max 2MB)</p>
+                <p id="uploadStatus" class="text-xs text-slate-500 hidden"></p>
+            </div>
+        </div>
         <h3 class="text-lg font-semibold text-slate-800 mb-6">Personal Details</h3>
         <form id="profileForm" class="space-y-4">
             <div>
@@ -78,6 +96,67 @@
         return;
     }
     document.getElementById('userName').textContent = me.user.name;
+    const initialsEl = document.getElementById('sidebarInitials');
+    if (initialsEl) initialsEl.textContent = (me.user.name || '?').charAt(0).toUpperCase();
+    if (me.user.profile_image) updateSidebarAvatar('/uploads/' + me.user.profile_image);
+
+    document.getElementById('photoInput').addEventListener('change', async function() {
+        const file = this.files[0];
+        if (!file) return;
+        if (file.size > 2 * 1024 * 1024) {
+            showToast('File too large. Max 2MB.');
+            this.value = '';
+            return;
+        }
+        const ext = file.name.split('.').pop().toLowerCase();
+        if (!['jpg','jpeg','png','webp'].includes(ext)) {
+            showToast('Allowed formats: JPG, PNG, WEBP');
+            this.value = '';
+            return;
+        }
+        const avatar = document.getElementById('profileAvatar');
+        const placeholder = document.getElementById('avatarPlaceholder');
+        const status = document.getElementById('uploadStatus');
+        avatar.src = URL.createObjectURL(file);
+        avatar.classList.remove('hidden');
+        placeholder.classList.add('hidden');
+        status.textContent = 'Uploading...';
+        status.classList.remove('hidden');
+        const fd = new FormData();
+        fd.append('photo', file);
+        try {
+            const res = await fetch('/api/student/profile/upload-photo', { method: 'POST', body: fd });
+            const data = await res.json();
+            if (data.success) {
+                showToast(data.message || 'Photo updated!');
+                const newUrl = '/uploads/' + data.user.profile_image + '?t=' + Date.now();
+                avatar.src = newUrl;
+                updateSidebarAvatar(newUrl);
+            } else {
+                showToast(data.message || 'Upload failed');
+                if (me.user.profile_image) {
+                    avatar.src = '/uploads/' + me.user.profile_image;
+                    avatar.classList.remove('hidden');
+                    placeholder.classList.add('hidden');
+                } else {
+                    avatar.classList.add('hidden');
+                    placeholder.classList.remove('hidden');
+                }
+            }
+        } catch (_) {
+            showToast('Upload failed');
+            if (me.user.profile_image) {
+                avatar.src = '/uploads/' + me.user.profile_image;
+                avatar.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+            } else {
+                avatar.classList.add('hidden');
+                placeholder.classList.remove('hidden');
+            }
+        }
+        status.classList.add('hidden');
+        this.value = '';
+    });
 
     document.getElementById('profileForm').addEventListener('submit', async (e) => {
         e.preventDefault();
