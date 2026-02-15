@@ -213,6 +213,17 @@
             if (initialsEl) initialsEl.classList.remove('hidden');
         }
     }
+    function faviconPulse() {
+        const link = document.querySelector('link[rel="icon"]');
+        if (!link) return;
+        const href = link.href;
+        const blank = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+        let n = 0;
+        const iv = setInterval(function() {
+            link.href = n % 2 ? href : blank;
+            if (++n >= 6) clearInterval(iv);
+        }, 120);
+    }
     function showToast(message) {
         const container = document.getElementById('toastContainer');
         const toast = document.createElement('div');
@@ -237,7 +248,7 @@
     </script>
     {% for category, message in get_flashed_messages(with_categories=true) %}
     {% if category == 'success' %}
-    <script>document.addEventListener('DOMContentLoaded', function(){ showToast({{ message | tojson }}); });</script>
+    <script>document.addEventListener('DOMContentLoaded', function(){ showToast({{ message | tojson }}); if(typeof faviconPulse==="function")faviconPulse(); });</script>
     {% endif %}
     {% endfor %}
     {% block scripts %}{% endblock %}
