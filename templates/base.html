@@ -1,126 +1,179 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#2563eb">
-    <link rel="icon" href="{{ url_for('static', filename='favicon.png') }}?v=1" type="image/png">
-    <link rel="apple-touch-icon" href="{{ url_for('static', filename='favicon.png') }}?v=1">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Google Search Console verification (PASTE YOUR CODE HERE) -->
+    <meta
+      name="google-site-verification"
+      content="PASTE_YOUR_CODE_FROM_GOOGLE"
+    />
+
+    <!-- SEO -->
+    <meta
+      name="description"
+      content="Smart Campus Issue Reporting System – report and track campus problems easily."
+    />
+    <meta
+      name="keywords"
+      content="smart campus, issue reporting, college app, student complaints"
+    />
+    <meta name="author" content="Smart Campus" />
+
+    <!-- Theme -->
+    <meta name="theme-color" content="#2563eb" />
+
+    <!-- Favicon -->
+    <link
+      rel="icon"
+      href="{{ url_for('static', filename='favicon.png') }}"
+      type="image/png"
+    />
+    <link
+      rel="apple-touch-icon"
+      href="{{ url_for('static', filename='favicon.png') }}"
+    />
+
     <title>{% block title %}Smart Campus{% endblock %} | Issue Reporting</title>
+
     <script src="https://cdn.tailwindcss.com"></script>
+
     <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: { 50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe', 300: '#93c5fd', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 800: '#1e40af', 900: '#1e3a8a' }
-                    }
-                }
-            }
-        }
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: {
+                50: "#eff6ff",
+                100: "#dbeafe",
+                200: "#bfdbfe",
+                300: "#93c5fd",
+                400: "#60a5fa",
+                500: "#3b82f6",
+                600: "#2563eb",
+                700: "#1d4ed8",
+                800: "#1e40af",
+                900: "#1e3a8a",
+              },
+            },
+          },
+        },
+      };
     </script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
     <style>
-        :root {
-            --bg-color: #f8fafc;
-            --card-bg: #ffffff;
-            --text-color: #1e293b;
-            --text-muted: #64748b;
-            --primary-color: #2563eb;
-            --border-color: #e2e8f0;
-            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.07);
+      :root {
+        --bg-color: #f8fafc;
+        --card-bg: #ffffff;
+        --text-color: #1e293b;
+        --text-muted: #64748b;
+        --primary-color: #2563eb;
+        --border-color: #e2e8f0;
+        --shadow:
+          0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.07);
+      }
+
+      body.dark {
+        --bg-color: #0f172a;
+        --card-bg: #1e293b;
+        --text-color: #f1f5f9;
+        --text-muted: #94a3b8;
+        --primary-color: #60a5fa;
+        --border-color: #334155;
+        --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.25);
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background: var(--bg-color);
+        color: var(--text-color);
+        transition: all 0.3s ease;
+      }
+
+      .card {
+        background: var(--card-bg);
+        box-shadow: var(--shadow);
+        transition:
+          transform 0.25s ease,
+          box-shadow 0.25s ease;
+      }
+
+      .card:hover {
+        transform: scale(1.02);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+      }
+
+      .theme-toggle {
+        position: fixed;
+        top: 1rem;
+        right: 1rem;
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 0.5rem;
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
         }
-        body.dark {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --text-color: #f1f5f9;
-            --text-muted: #94a3b8;
-            --primary-color: #60a5fa;
-            --border-color: #334155;
-            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.2), 0 2px 4px -2px rgb(0 0 0 / 0.15);
+        to {
+          opacity: 1;
+          transform: translateY(0);
         }
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-color) !important;
-            color: var(--text-color);
-            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
-        }
-        body.dark .bg-slate-50, body.dark .min-h-screen { background-color: var(--bg-color) !important; }
-        body.dark .bg-white, body.dark .card.bg-white { background-color: var(--card-bg) !important; border-color: var(--border-color) !important; }
-        body.dark .text-slate-800, body.dark .text-slate-700, body.dark .text-slate-600 { color: var(--text-color) !important; }
-        body.dark .text-slate-500, body.dark .text-slate-400 { color: var(--text-muted) !important; }
-        body.dark .border-slate-200, body.dark .border-slate-100 { border-color: var(--border-color) !important; }
-        body.dark input, body.dark textarea, body.dark select { background-color: var(--card-bg) !important; color: var(--text-color) !important; border-color: var(--border-color) !important; }
-        body.dark .text-primary-600, body.dark .text-primary-700, body.dark a.text-primary-600, body.dark a.text-primary-700 { color: var(--primary-color) !important; }
-        body.dark .hover\:text-primary-700:hover { color: #93c5fd !important; }
-        .theme-toggle {
-            position: fixed; top: 1rem; right: 1rem; z-index: 50;
-            width: 2.5rem; height: 2.5rem; border-radius: 0.5rem;
-            display: flex; align-items: center; justify-content: center;
-            background: var(--card-bg); border: 1px solid var(--border-color);
-            color: var(--text-color); cursor: pointer;
-            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
-        }
-        .theme-toggle:hover { filter: brightness(1.1); }
-        .card {
-            box-shadow: var(--shadow);
-            transition: transform 0.25s ease, box-shadow 0.25s ease, background-color 0.3s ease, border-color 0.3s ease;
-            transform-origin: center;
-        }
-        .card:hover {
-            transform: scale(1.02);
-            box-shadow: 0 12px 24px -4px rgb(0 0 0 / 0.1), 0 6px 12px -6px rgb(0 0 0 / 0.08);
-        }
-        body.dark .card:hover { box-shadow: 0 12px 24px -4px rgb(0 0 0 / 0.3); }
-        .transition-smooth { transition: all 0.2s ease; }
-        .hover-lift {
-            transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
-        }
-        .hover-lift:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgb(0 0 0 / 0.1);
-        }
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .fade-in { animation: fadeInUp 0.4s ease-out forwards; }
+      }
+
+      .fade-in {
+        animation: fadeInUp 0.4s ease-out;
+      }
     </style>
+
     {% block head %}{% endblock %}
-</head>
-<body class="bg-slate-50 min-h-screen">
-    <script>!function(){var t=localStorage.getItem("smart-campus-theme");(t==="dark"||!t&&window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)&&document.body.classList.add("dark");}();</script>
-    <button id="themeToggle" class="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">
-        <svg id="iconSun" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-        <svg id="iconMoon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
-    </button>
-    <div class="fade-in min-h-screen">{% block body %}{% endblock %}</div>
+  </head>
+
+  <body class="min-h-screen">
     <script>
-    (function() {
-        const KEY = 'smart-campus-theme';
-        const toggle = document.getElementById('themeToggle');
-        const iconSun = document.getElementById('iconSun');
-        const iconMoon = document.getElementById('iconMoon');
-        function isDark() { return document.body.classList.contains('dark'); }
-        function applyTheme(dark) {
-            document.body.classList.toggle('dark', dark);
-            if (iconSun) iconSun.classList.toggle('hidden', !dark);
-            if (iconMoon) iconMoon.classList.toggle('hidden', dark);
+      (function () {
+        const saved = localStorage.getItem("smart-campus-theme");
+        if (
+          saved === "dark" ||
+          (!saved && window.matchMedia("(prefers-color-scheme: dark)").matches)
+        ) {
+          document.body.classList.add("dark");
         }
-        function init() {
-            const saved = localStorage.getItem(KEY);
-            const dark = saved === 'dark' || (saved === null && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
-            applyTheme(dark);
-        }
-        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
-        else init();
-        if (toggle) toggle.addEventListener('click', () => {
-            const dark = !isDark();
-            applyTheme(dark);
-            localStorage.setItem(KEY, dark ? 'dark' : 'light');
-        });
-    })();
+      })();
     </script>
+
+    <button id="themeToggle" class="theme-toggle" title="Toggle dark mode">
+      🌙
+    </button>
+
+    <div class="fade-in min-h-screen">{% block body %}{% endblock %}</div>
+
+    <script>
+      const toggle = document.getElementById("themeToggle");
+
+      toggle.addEventListener("click", () => {
+        document.body.classList.toggle("dark");
+        localStorage.setItem(
+          "smart-campus-theme",
+          document.body.classList.contains("dark") ? "dark" : "light",
+        );
+      });
+    </script>
+
     {% block scripts %}{% endblock %}
-</body>
+  </body>
 </html>
