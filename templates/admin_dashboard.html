@@ -13,22 +13,26 @@
 {% block page_title %}Admin Dashboard{% endblock %}
 {% block head %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+    body.dark #statResolvedToday { color: #34d399 !important; }
+    body.dark #statPending { color: #fb923c !important; }
+</style>
 {% endblock %}
 {% block content %}
 <div id="pageOverview" class="space-y-6">
     <!-- Analytics stat cards -->
     <div class="grid gap-4 sm:grid-cols-3">
-        <div class="analytics-card card bg-white rounded-xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+        <div class="analytics-card card bg-white rounded-xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-all duration-200">
             <p class="text-sm font-medium text-slate-500 uppercase tracking-wide">Total Issues</p>
-            <p id="statTotal" class="text-3xl font-bold text-slate-800 mt-2">{{ total_issues }}</p>
+            <p id="statTotal" class="text-3xl font-bold text-slate-800 mt-2">—</p>
         </div>
-        <div class="analytics-card card bg-white rounded-xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+        <div class="analytics-card card bg-white rounded-xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-all duration-200">
             <p class="text-sm font-medium text-slate-500 uppercase tracking-wide">Resolved Today</p>
-            <p id="statResolvedToday" class="text-3xl font-bold text-emerald-600 mt-2">{{ resolved_today }}</p>
+            <p id="statResolvedToday" class="text-3xl font-bold text-emerald-600 mt-2">—</p>
         </div>
-        <div class="analytics-card card bg-white rounded-xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-            <p class="text-sm font-medium text-slate-500 uppercase tracking-wide">Pending Issues</p>
-            <p id="statPending" class="text-3xl font-bold text-orange-600 mt-2">{{ pending_count }}</p>
+        <div class="analytics-card card bg-white rounded-xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-all duration-200">
+            <p class="text-sm font-medium text-slate-500 uppercase tracking-wide">Pending</p>
+            <p id="statPending" class="text-3xl font-bold text-orange-600 mt-2">—</p>
         </div>
     </div>
     <!-- Category bar chart -->
@@ -118,56 +122,79 @@
     function esc(s) { const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
     function attrEsc(s) { return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-    const categoryLabels = {{ category_labels | tojson }};
-    const categoryCounts = {{ category_counts | tojson }};
-    const CHART_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#64748b'];
-
+    const CHART_COLORS_LIGHT = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#64748b'];
+    const CHART_COLORS_DARK = ['#60a5fa', '#34d399', '#fbbf24', '#a78bfa', '#22d3ee', '#94a3b8'];
     let categoryChart = null;
-    function initCategoryChart() {
+
+    function getChartTheme() {
+        const dark = document.body.classList.contains('dark');
+        return {
+            bg: dark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+            text: dark ? '#94a3b8' : '#64748b'
+        };
+    }
+
+    function initCategoryChart(labels, counts) {
         const ctx = document.getElementById('categoryChart');
         if (!ctx) return;
         if (categoryChart) categoryChart.destroy();
+        const dark = document.body.classList.contains('dark');
+        const colors = dark ? CHART_COLORS_DARK : CHART_COLORS_LIGHT;
+        const theme = getChartTheme();
         categoryChart = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: categoryLabels,
+                labels: labels || [],
                 datasets: [{
                     label: 'Issues',
-                    data: categoryCounts,
-                    backgroundColor: categoryLabels.map((_, i) => CHART_COLORS[i % CHART_COLORS.length]),
-                    borderRadius: 6
+                    data: counts || [],
+                    backgroundColor: (labels || []).map((_, i) => colors[i % colors.length]),
+                    borderRadius: 6,
+                    borderSkipped: false
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: { duration: 600 },
                 plugins: {
                     legend: { display: false }
                 },
                 scales: {
                     y: {
                         beginAtZero: true,
-                        ticks: { stepSize: 1 },
-                        grid: { color: 'rgba(0,0,0,0.05)' }
+                        ticks: { stepSize: 1, color: theme.text },
+                        grid: { color: theme.bg }
                     },
                     x: {
-                        grid: { display: false }
+                        grid: { display: false },
+                        ticks: { color: theme.text }
                     }
                 }
             }
         });
     }
-    initCategoryChart();
 
-    async function loadStats() {
-        const res = await fetch('/api/issues/stats');
-        const data = await res.json();
-        if (data.success) {
-            document.getElementById('statTotal').textContent = data.stats.total;
-            document.getElementById('statResolvedToday').textContent = data.stats.resolved_today ?? 0;
-            document.getElementById('statPending').textContent = data.stats.pending;
+    async function loadAnalytics() {
+        try {
+            const res = await fetch('/api/admin/analytics');
+            const data = await res.json();
+            if (data.success && data.analytics) {
+                const a = data.analytics;
+                document.getElementById('statTotal').textContent = a.total_issues;
+                document.getElementById('statResolvedToday').textContent = a.resolved_today ?? 0;
+                document.getElementById('statPending').textContent = a.pending_issues;
+                initCategoryChart(a.category_labels || [], a.category_counts || []);
+            }
+        } catch (_) {
+            document.getElementById('statTotal').textContent = '0';
+            document.getElementById('statResolvedToday').textContent = '0';
+            document.getElementById('statPending').textContent = '0';
+            initCategoryChart([], []);
         }
     }
+
+    function loadStats() { loadAnalytics(); }
 
     let currentIssueId = null;
 
@@ -176,7 +203,7 @@
         document.getElementById('pageIssues').classList.toggle('hidden', page !== 'issues');
         document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('active'));
         document.querySelector(`[data-page="${page}"]`).classList.add('active');
-        if (page === 'overview') loadStats();
+        if (page === 'overview') loadAnalytics();
         if (page === 'issues') loadIssues();
     }
 

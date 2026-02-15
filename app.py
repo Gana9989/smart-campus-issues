@@ -78,31 +78,7 @@ def create_app():
     def admin_dashboard():
         if current_user.role != "admin":
             return redirect(url_for("student_dashboard"))
-
-        total_issues = Issue.query.count()
-        today = date.today()
-        resolved_today = Issue.query.filter(
-            Issue.status == "Resolved",
-            func.date(Issue.updated_at) == today,
-        ).count()
-        pending_count = Issue.query.filter_by(status="Pending").count()
-        category_results = (
-            db.session.query(Issue.category, func.count(Issue.id))
-            .group_by(Issue.category)
-            .order_by(func.count(Issue.id).desc())
-            .all()
-        )
-        category_labels = [r[0] for r in category_results]
-        category_counts = [r[1] for r in category_results]
-
-        return render_template(
-            "admin_dashboard.html",
-            total_issues=total_issues,
-            resolved_today=resolved_today,
-            pending_count=pending_count,
-            category_labels=category_labels,
-            category_counts=category_counts,
-        )
+        return render_template("admin_dashboard.html")
 
     @app.route("/uploads/<path:filename>")
     def uploaded_file(filename):
@@ -352,6 +328,37 @@ def create_app():
                 "in_progress": in_progress,
                 "resolved": resolved,
                 "resolved_today": resolved_today,
+            },
+        })
+
+    @app.route("/api/admin/analytics")
+    @login_required
+    def api_admin_analytics():
+        if current_user.role != "admin":
+            return jsonify({"success": False, "message": "Admin only"}), 403
+        total_issues = Issue.query.count()
+        today = date.today()
+        resolved_today = Issue.query.filter(
+            Issue.status == "Resolved",
+            func.date(Issue.updated_at) == today,
+        ).count()
+        pending_issues = Issue.query.filter_by(status="Pending").count()
+        category_results = (
+            db.session.query(Issue.category, func.count(Issue.id))
+            .group_by(Issue.category)
+            .order_by(func.count(Issue.id).desc())
+            .all()
+        )
+        category_labels = [r[0] for r in category_results]
+        category_counts = [r[1] for r in category_results]
+        return jsonify({
+            "success": True,
+            "analytics": {
+                "total_issues": total_issues,
+                "resolved_today": resolved_today,
+                "pending_issues": pending_issues,
+                "category_labels": category_labels,
+                "category_counts": category_counts,
             },
         })
 
